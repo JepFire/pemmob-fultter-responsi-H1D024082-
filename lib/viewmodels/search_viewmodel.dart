@@ -34,6 +34,11 @@ class SearchViewModel extends ChangeNotifier {
 
   // ─── Init ─────────────────────────────────────────────────────────────────
   Future<void> init() async {
+    _searchState = SearchState.idle;
+    _searchResults = [];
+    _query = '';
+    _errorMessage = null;
+
     final raw = await _storageService.getSearchHistory();
     // Bersihkan history lama yang kotor (entri < 3 karakter atau prefix dari entri lain)
     _searchHistory = _cleanHistory(raw);

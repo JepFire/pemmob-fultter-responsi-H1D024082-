@@ -30,10 +30,20 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  void _selectLocation(BuildContext context, LocationModel loc) {
-    // Simpan nama kota yang dipilih ke history (bukan query mentah)
+  void _selectLocation(
+    BuildContext context,
+    LocationModel loc, {
+    bool saveHistory = true,
+  }) {
     final vm = context.read<SearchViewModel>();
-    vm.commitSearchHistory(loc.name);
+    if (saveHistory) {
+      // Simpan teks pencarian utuh yang diketik user (bukan nama opsi yang dipilih)
+      final typedQuery = _controller.text.trim();
+      if (typedQuery.isNotEmpty) {
+        vm.commitSearchHistory(typedQuery);
+      }
+    }
+    vm.clearResults();
     Navigator.pop(context, loc);
   }
 
@@ -61,6 +71,8 @@ class _SearchScreenState extends State<SearchScreen> {
               Expanded(
                 child: _buildContent(context, vm),
               ),
+              if (vm.favorites.isNotEmpty)
+                _buildFavoritesSection(context, vm.favorites),
             ],
           );
         },
@@ -99,9 +111,10 @@ class _SearchScreenState extends State<SearchScreen> {
             }
           },
           onSubmitted: (value) {
-            if (value.isNotEmpty) {
-              vm.search(value);
-              // history hanya disimpan saat user pilih lokasi di _selectLocation
+            final trimmed = value.trim();
+            if (trimmed.isNotEmpty) {
+              vm.search(trimmed);
+              vm.commitSearchHistory(trimmed);
             }
           },
           textInputAction: TextInputAction.search,
@@ -177,7 +190,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 leading: const Icon(Icons.history, color: Colors.white38, size: 18),
                 title: Text(query, style: const TextStyle(color: Colors.white70, fontSize: 14)),
                 onTap: () {
-                  _controller.text = query;
+                  setState(() {
+                    _controller.text = query;
+                  });
                   context.read<SearchViewModel>().search(query);
                 },
                 dense: true,
@@ -185,30 +200,7 @@ class _SearchScreenState extends State<SearchScreen> {
           const SizedBox(height: 16),
         ],
 
-        // Favorit
-        if (vm.favorites.isNotEmpty) ...[
-          const Text('Lokasi Favorit', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          ...vm.favorites.map((loc) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.favorite, color: Colors.amber, size: 16),
-                ),
-                title: Text(loc.name, style: const TextStyle(color: Colors.white)),
-                subtitle: Text(
-                  [loc.admin1, loc.country].where((e) => e != null && e.isNotEmpty).join(', '),
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
-                ),
-                onTap: () => _selectLocation(context, loc),
-              )),
-        ],
-
-        if (vm.searchHistory.isEmpty && vm.favorites.isEmpty)
+        if (vm.searchHistory.isEmpty)
           const Padding(
             padding: EdgeInsets.only(top: 60),
             child: Column(
@@ -224,6 +216,82 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildFavoritesSection(
+    BuildContext context,
+    List<LocationModel> favorites,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF13263A),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.favorite, color: Colors.amber, size: 16),
+                SizedBox(width: 6),
+                Text(
+                  'Lokasi Favorit',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 150),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: favorites.length,
+                itemBuilder: (context, i) {
+                  final loc = favorites[i];
+                  final subtitle = [loc.admin1, loc.country]
+                      .where((e) => e != null && e.isNotEmpty)
+                      .join(', ');
+                  return ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.favorite, color: Colors.amber, size: 14),
+                    ),
+                    title: Text(
+                      loc.name,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                    subtitle: subtitle.isNotEmpty
+                        ? Text(
+                            subtitle,
+                            style: const TextStyle(color: Colors.white54, fontSize: 11),
+                          )
+                        : null,
+                    onTap: () => _selectLocation(context, loc, saveHistory: false),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
