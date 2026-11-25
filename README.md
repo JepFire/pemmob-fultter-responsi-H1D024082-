@@ -7,8 +7,8 @@ Aplikasi cuaca berbasis Flutter yang menampilkan informasi cuaca real-time mengg
 ## 📸 Screenshots
 
 <img width="432" height="886" alt="image" src="https://github.com/user-attachments/assets/38ade8ac-d749-4152-b2b8-7765bf8d42e6" />
-<img width="432" height="886" alt="image" src="https://github.com/user-attachments/assets/764dcc8f-df35-40be-9c02-eddbe799cea5" />
-<img width="432" height="886" alt="image" src="https://github.com/user-attachments/assets/91c45c6d-5da7-47de-8853-be26785ff3bb" />
+<img width="432" height="886" alt="image" src="https://github.com/user-attachments/assets/4d7e51de-4713-40af-9a69-eb13cb998d47" />
+
 
 
 
