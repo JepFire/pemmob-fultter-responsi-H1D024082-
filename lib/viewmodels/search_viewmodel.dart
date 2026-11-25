@@ -34,9 +34,32 @@ class SearchViewModel extends ChangeNotifier {
 
   // ─── Init ─────────────────────────────────────────────────────────────────
   Future<void> init() async {
-    _searchHistory = await _storageService.getSearchHistory();
+    final raw = await _storageService.getSearchHistory();
+    // Bersihkan history lama yang kotor (entri < 3 karakter atau prefix dari entri lain)
+    _searchHistory = _cleanHistory(raw);
+    if (_searchHistory.length != raw.length) {
+      // Simpan kembali versi yang sudah bersih
+      await _storageService.clearSearchHistory();
+      for (final q in _searchHistory.reversed) {
+        await _storageService.addToSearchHistory(q);
+      }
+    }
     _favorites = await _storageService.getFavorites();
     notifyListeners();
+  }
+
+  /// Hapus entri yang merupakan prefix dari entri lain dalam list yang sama.
+  List<String> _cleanHistory(List<String> raw) {
+    final result = <String>[];
+    for (final entry in raw) {
+      // Buang jika ada entri lain yang mengandung entry ini sebagai prefix
+      final isPrefix = raw.any((other) =>
+          other != entry &&
+          other.toLowerCase().startsWith(entry.toLowerCase()) &&
+          other.length > entry.length);
+      if (!isPrefix) result.add(entry);
+    }
+    return result;
   }
 
   // ─── Search (live, tanpa simpan history) ─────────────────────────────────

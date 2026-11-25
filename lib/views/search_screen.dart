@@ -31,11 +31,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _selectLocation(BuildContext context, LocationModel loc) {
-    // Simpan ke history hanya saat user benar-benar memilih lokasi
+    // Simpan nama kota yang dipilih ke history (bukan query mentah)
     final vm = context.read<SearchViewModel>();
-    if (vm.query.isNotEmpty) {
-      vm.commitSearchHistory(vm.query);
-    }
+    vm.commitSearchHistory(loc.name);
     Navigator.pop(context, loc);
   }
 
@@ -103,7 +101,7 @@ class _SearchScreenState extends State<SearchScreen> {
           onSubmitted: (value) {
             if (value.isNotEmpty) {
               vm.search(value);
-              vm.commitSearchHistory(value);
+              // history hanya disimpan saat user pilih lokasi di _selectLocation
             }
           },
           textInputAction: TextInputAction.search,
